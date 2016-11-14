@@ -1,0 +1,210 @@
+
+
+/**Testing with Android Emulator in Parallel with Saucelabs //
+ * Utilizing: JUnit Framework
+ */
+
+import com.saucelabs.common.SauceOnDemandAuthentication;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Platform;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+
+import com.saucelabs.junit.Parallelized;
+import com.saucelabs.junit.ConcurrentParameterized;
+import com.saucelabs.junit.SauceOnDemandTestWatcher;
+
+import java.net.URL;
+import java.util.LinkedList;
+
+import static org.junit.Assert.assertEquals;
+
+import com.saucelabs.common.SauceOnDemandAuthentication;
+import com.saucelabs.common.SauceOnDemandSessionIdProvider;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+
+import java.net.URL;
+import java.util.LinkedList;
+
+import static org.junit.Assert.assertEquals;
+
+/**
+* Demonstrates how to write a JUnit test that runs tests against Sauce Labs using multiple browsers in parallel.
+* <p/>
+* The test is annotated with the {@link ConcurrentParameterized} test runner...
+* <p/>
+* The test also includes the {@link SauceOnDemandTestWatcher}...
+*
+* @author Ross Rowe
+*/
+@RunWith(ConcurrentParameterized.class)
+public class SauceLabsAndroidParallel implements SauceOnDemandSessionIdProvider {
+
+ /**
+  * Constructs a {@link SauceOnDemandAuthentication} instance using the supplied user name/access key.  To use the authentication
+  * supplied by environment variables or from an external file, use the no-arg {@link SauceOnDemandAuthentication} constructor.
+  */
+ //public SauceOnDemandAuthentication authentication = new SauceOnDemandAuthentication("${sauceUserName}", "${sauceAccessKey}");
+
+ /**
+  * JUnit Rule which will mark the Sauce Job as passed/failed when the test succeeds or fails.
+  */
+ //@Rule
+ //public SauceOnDemandTestWatcher resultReportingTestWatcher = new SauceOnDemandTestWatcher(this, authentication);
+ 
+
+ /**
+  * Represents the browser to be used as part of the test run.
+  */
+ private String platformVersion;
+ /**
+  * Represents the operating system to be used as part of the test run.
+  */
+ private String platformName;
+ /**
+  * Represents the version of the browser to be used as part of the test run.
+  */
+ private String deviceName;
+ /**
+  * Instance variable which contains the Sauce Job Id.
+  */
+ private String sessionId;
+
+ /**
+  * The {@link WebDriver} instance which is used to perform browser interactions with.
+  */
+ private WebDriver driver;
+ 
+ 
+ private String name;
+ 
+ 
+ private String app;
+
+ /**
+  * Constructs a new instance of the test.  The constructor requires three string parameters, which represent the operating
+  * system, version and browser to be used when launching a Sauce VM.  The order of the parameters should be the same
+  * as that of the elements within the {@link #browsersStrings()} method.
+  * @param os
+  * @param version
+  * @param browser
+  */
+ public SauceLabsAndroidParallel(String platformName, String deviceName, String platformVersion, String app, String name) {
+     super();
+     this.platformName = platformName;
+     this.deviceName = deviceName;
+     this.platformVersion = platformVersion;
+     this.app = app;
+     this.name = name;
+     
+ }
+
+ /**
+  * @return a LinkedList containing String arrays representing the browser combinations the test should be run against. The values
+  * in the String array are used as part of the invocation of the test constructor
+  */
+ @ConcurrentParameterized.Parameters
+ public static LinkedList browsersStrings() {
+     LinkedList browsers = new LinkedList();
+     browsers.add(new String[]{"Android", "Android Emulator", "4.3", "http://saucelabs.com/example_files/ContactManager.apk","Android Emulator"});
+     browsers.add(new String[]{"Android", "Google Nexus 7 HD Emulator", "4.4", "http://saucelabs.com/example_files/ContactManager.apk","Google Nexus 7 HD Emulator"});
+     browsers.add(new String[]{"Android", "Samsung Galaxy S4 Emulator", "4.4", "http://saucelabs.com/example_files/ContactManager.apk","Samsung Galaxy S4 Emulator"});
+     browsers.add(new String[]{"Android", "LG Nexus 4 Emulator", "4.4", "http://saucelabs.com/example_files/ContactManager.apk","LG Nexus 4 Emulator"});
+    /*
+     browsers.add(new String[]{"Windows 8.1", "11", "internet explorer"});
+     browsers.add(new String[]{"OSX 10.8", "6", "safari"});
+     */
+     return browsers;
+     
+ }
+
+
+ /**
+  * Constructs a new {@link RemoteWebDriver} instance which is configured to use the capabilities defined by the {@link #browser},
+  * {@link #version} and {@link #os} instance variables, and which is configured to run against ondemand.saucelabs.com, using
+  * the username and access key populated by the {@link #authentication} instance.
+  *
+  * @throws Exception if an error occurs during the creation of the {@link RemoteWebDriver} instance.
+  */
+ @Before
+ public void setUp() throws Exception {
+ 	
+     DesiredCapabilities capabilities = new DesiredCapabilities();
+     capabilities.setCapability(CapabilityType.BROWSER_NAME, ""); //browser
+     if (platformVersion != null) {
+         capabilities.setCapability("platformVersion", platformVersion);
+     }
+     capabilities.setCapability("platformName", platformName);
+     capabilities.setCapability("deviceName", deviceName);
+     capabilities.setCapability("app", app);
+     capabilities.setCapability("name", "Android Phones-In-Parallel");
+     capabilities.setCapability("videoUploadOnPass", true);
+     capabilities.setCapability("recordScreenshots", true);
+     capabilities.setCapability("recordLogs", false);
+     capabilities.setCapability("captureHtml",true); // This feature is disabled by default
+     capabilities.setCapability("timeZone", "London");
+     capabilities.setCapability("passed", true); // Passing true or false for pass and fail status
+     capabilities.setCapability("build", "QA05-15.2.0.155");
+     capabilities.setCapability("tags", "Android Phone Suite");
+     
+     
+     this.driver = new RemoteWebDriver(
+    		 //new URL("http://GeeSlimmy:2cb58994-4f18-448a-b90b-c47a3b7006dc@ondemand.saucelabs.com:80/wd/hub"),
+    		 new URL("http://lisaogawaf:1666ee75-702e-45d5-9753-40442ce328cc@ondemand.saucelabs.com:80/wd/hub"),
+     		//new URL("http://GeeFung:90de4f29-cace-4e32-b100-ec977e5d28e1@ondemand.saucelabs.com:80/wd/hub"),
+             //new URL("http://" + authentication.getUsername() + ":" + authentication.getAccessKey() + "@ondemand.saucelabs.com:80/wd/hub"),
+             capabilities);
+     this.sessionId = (((RemoteWebDriver) driver).getSessionId()).toString();
+
+ }
+
+ /**
+  * Runs a simple test verifying the title of the amazon.com homepage.
+  * @throws Exception
+  */
+ @Test
+ public void AndroidDeviceTest() throws Exception {
+	 WebElement btn = driver.findElement(By.id("com.example.android.contactmanager:id/addContactButton"));
+		btn.click();
+		driver.findElement(By.id("com.example.android.contactmanager:id/contactNameEditText")).sendKeys("GeeSlimmy");
+		driver.findElement(By.id("com.example.android.contactmanager:id/contactEmailEditText")).sendKeys("geeslimmy@gmail.com");
+		driver.findElement(By.id("com.example.android.contactmanager:id/contactSaveButton")).click();
+ }
+
+ /**
+  * Closes the {@link WebDriver} session.
+  *
+  * @throws Exception
+  */
+ @After
+ public void tearDown() throws Exception {
+     driver.quit();
+ }
+
+ /**
+  *
+  * @return the value of the Sauce Job id.
+  */
+ @Override
+ public String getSessionId() {
+     return sessionId;
+ }
+}
